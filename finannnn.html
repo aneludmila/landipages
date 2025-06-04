@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financeiro DAMM Criações</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      background-color: #fff3e4;
+    }
+    .header {
+      background: linear-gradient(90deg, #bbbbbb, #2b2b2b, #000000);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: bold;
+    }
+    .card-custom {
+      background-color: white;
+      border-radius: 1rem;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.651);
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">SISTEMA FINANCEIRO - DAMM CRIAÇÕES</div>
+  <div class="container my-4">
+    <div class="row g-4">
+
+      <!-- Formulário de Venda -->
+      <div class="col-md-4">
+        <div class="card-custom">
+          <h5>Registrar Venda</h5>
+          <form id="formVenda">
+            <input type="date" class="form-control mb-2" id="dataVenda" required>
+            <input type="text" class="form-control mb-2" id="descVenda" placeholder="Descrição do produto" required>
+            <input type="number" class="form-control mb-2" id="valorVenda" placeholder="Valor" required>
+            <select class="form-select mb-2" id="pagoVenda">
+              <option value="Sim">Pago</option>
+              <option value="Não">Não</option>
+            </select>
+            <select class="form-select mb-2" id="formaVenda">
+              <option>Dinheiro</option>
+              <option>Pix</option>
+              <option>Cartão</option>
+            </select>
+            <button type="submit" class="btn btn-dark w-100">Registrar Venda</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Formulário de Despesa -->
+      <div class="col-md-4">
+        <div class="card-custom">
+          <h5>Registrar Despesa</h5>
+          <form id="formDespesa">
+            <input type="date" class="form-control mb-2" id="dataDespesa" required>
+            <input type="text" class="form-control mb-2" id="descDespesa" placeholder="Descrição da despesa" required>
+            <input type="number" class="form-control mb-2" id="valorDespesa" placeholder="Valor" required>
+            <select class="form-select mb-2" id="formaDespesa">
+              <option>Dinheiro</option>
+              <option>Pix</option>
+              <option>Cartão</option>
+            </select>
+            <button type="submit" class="btn btn-dark w-100">Registrar Despesa</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Contas a Pagar -->
+      <div class="col-md-4">
+        <div class="card-custom">
+          <h5>Contas a Pagar</h5>
+          <form id="formConta">
+            <input type="date" class="form-control mb-2" id="dataConta" required>
+            <input type="text" class="form-control mb-2" id="descConta" placeholder="Descrição da conta" required>
+            <input type="number" class="form-control mb-2" id="valorConta" placeholder="Valor" required>
+            <select class="form-select mb-2" id="formaConta">
+              <option>Dinheiro</option>
+              <option>Pix</option>
+              <option>Cartão</option>
+            </select>
+            <select class="form-select mb-2" id="statusConta">
+              <option>Paga</option>
+              <option>Não paga</option>
+            </select>
+            <button type="submit" class="btn btn-dark w-100">Registrar Conta</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Exportar e Resumo -->
+      <div class="col-md-12">
+        <div class="card-custom">
+          <h5>Exportar Dados e Resumo</h5>
+          <button onclick="exportarExcel()" class="btn btn-dark">Exportar para Excel</button>
+          <div class="mt-3" id="resumoFinanceiro"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let vendas = [];
+    let despesas = [];
+    let contas = [];
+
+    document.getElementById("formVenda").addEventListener("submit", function(e) {
+      e.preventDefault();
+      vendas.push({
+        data: document.getElementById("dataVenda").value,
+        descricao: document.getElementById("descVenda").value,
+        valor: parseFloat(document.getElementById("valorVenda").value),
+        pago: document.getElementById("pagoVenda").value,
+        forma: document.getElementById("formaVenda").value
+      });
+      this.reset();
+      alert("Venda registrada com sucesso!");
+      atualizarResumo();
+    });
+
+    document.getElementById("formDespesa").addEventListener("submit", function(e) {
+      e.preventDefault();
+      despesas.push({
+        data: document.getElementById("dataDespesa").value,
+        descricao: document.getElementById("descDespesa").value,
+        valor: parseFloat(document.getElementById("valorDespesa").value),
+        forma: document.getElementById("formaDespesa").value
+      });
+      this.reset();
+      alert("Despesa registrada com sucesso!");
+      atualizarResumo();
+    });
+
+    document.getElementById("formConta").addEventListener("submit", function(e) {
+      e.preventDefault();
+      contas.push({
+        data: document.getElementById("dataConta").value,
+        descricao: document.getElementById("descConta").value,
+        valor: parseFloat(document.getElementById("valorConta").value),
+        forma: document.getElementById("formaConta").value,
+        status: document.getElementById("statusConta").value
+      });
+      this.reset();
+      alert("Conta registrada com sucesso!");
+      atualizarResumo();
+    });
+
+    function atualizarResumo() {
+      let totalVendas = vendas.reduce((acc, v) => acc + (v.pago === "Sim" ? v.valor : 0), 0);
+      let totalDespesas = despesas.reduce((acc, d) => acc + d.valor, 0);
+      let totalContasNaoPagas = contas.reduce((acc, c) => acc + (c.status === "Não paga" ? c.valor : 0), 0);
+      let saldo = totalVendas - totalDespesas - totalContasNaoPagas;
+
+      document.getElementById("resumoFinanceiro").innerHTML = `
+        <p><strong>Vendas pagas:</strong> R$ ${totalVendas.toFixed(2)}</p>
+        <p><strong>Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
+        <p><strong>Contas a pagar (não pagas):</strong> R$ ${totalContasNaoPagas.toFixed(2)}</p>
+        <p><strong>Saldo atual:</strong> R$ ${saldo.toFixed(2)}</p>
+      `;
+    }
+
+    function exportarExcel() {
+      const wb = XLSX.utils.book_new();
+
+      const dadosVendas = [["Data", "Valor", "Descrição", "Pago", "Forma"]].concat(
+        vendas.map(v => [v.data, v.valor, v.descricao, v.pago, v.forma])
+      );
+      const dadosDespesas = [["Data", "Valor", "Descrição", "Forma"]].concat(
+        despesas.map(d => [d.data, d.valor, d.descricao, d.forma])
+      );
+      const dadosContas = [["Data", "Valor", "Descrição", "Forma", "Status"]].concat(
+        contas.map(c => [c.data, c.valor, c.descricao, c.forma, c.status])
+      );
+
+      const ws1 = XLSX.utils.aoa_to_sheet(dadosVendas);
+      const ws2 = XLSX.utils.aoa_to_sheet(dadosDespesas);
+      const ws3 = XLSX.utils.aoa_to_sheet(dadosContas);
+
+      XLSX.utils.book_append_sheet(wb, ws1, "Vendas");
+      XLSX.utils.book_append_sheet(wb, ws2, "Despesas");
+      XLSX.utils.book_append_sheet(wb, ws3, "Contas");
+
+      XLSX.writeFile(wb, "financeiro_damm.xlsx");
+    }
+  </script>
+</body>
+</html>
